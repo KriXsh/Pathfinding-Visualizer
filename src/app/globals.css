@@ -1,0 +1,183 @@
+@import "tailwindcss";
+
+/* Dark-only app: <html class="dark"> is set in layout.tsx, so `dark:` utilities always apply. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens, shared with krish.dev so the two feel like one product.
+   --------------------------------------------------------------------------- */
+@theme {
+  --color-background: #0a0d14;
+  --color-surface: #121721;
+  --color-elevated: #1a202c;
+  --color-foreground: #f8fafc;
+  --color-muted: #151722;
+  --color-muted-foreground: #94a3b8;
+  /* lifted from #64748b so small labels pass WCAG AA on the background */
+  --color-subtle: #7d8aa0;
+  --color-ink: #ffffff;
+  --color-border: rgb(255 255 255 / 0.1);
+  --color-border-strong: rgb(255 255 255 / 0.16);
+
+  --color-primary: #6366f1;
+  --color-violet: #8b5cf6;
+  --color-cyan: #06b6d4;
+  --color-glow: #a5b4fc;
+  --color-shadow: rgb(0 0 0 / 0.85);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@theme inline {
+  --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-sans-face), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-face), ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-background);
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: rgb(99 102 241 / 0.3);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-glow);
+    outline-offset: 3px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Utilities
+   --------------------------------------------------------------------------- */
+@utility glass {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.015));
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+@utility text-gradient {
+  background-image: linear-gradient(100deg, #c7d2fe 0%, #8b5cf6 35%, #06b6d4 65%, #c7d2fe 100%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+@utility grid-lines {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+@utility mask-fade-b {
+  mask-image: linear-gradient(to bottom, #000 60%, transparent);
+}
+
+@utility text-display-md {
+  font-size: clamp(1.9rem, 3.6vw, 3.25rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) var(--color-background);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Pathfinding board
+   Board surfaces and node colours. Utilities: bg-pf-*, animate-pf-*.
+   --------------------------------------------------------------------------- */
+@theme {
+  --color-pf-canvas: #0a0d14;
+  --color-pf-surface: #121721;
+  --color-pf-panel: #1a202c;
+  --color-pf-line: rgb(255 255 255 / 0.06);
+
+  --color-pf-start: #34d399;
+  --color-pf-target: #fb7185;
+  --color-pf-path: #fbbf24;
+  --color-pf-frontier: #22d3ee;
+  --color-pf-visited: #6366f1;
+  --color-pf-wall: #475569;
+  --color-pf-weight: #8b5cf6;
+
+  /* backwards, not both: a retained transform keeps every cell on its own
+     compositor layer and costs ~20% of the frame budget while exploring. */
+  --animate-pf-cell-in: pf-cell-in 0.6s var(--ease-out-expo) backwards;
+  --animate-pf-pulse: pf-pulse 1.8s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+  --animate-pf-spin: spin 7s linear infinite;
+  --animate-pf-blink: pf-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes pf-cell-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pf-pulse {
+  0% { transform: scale(0.85); opacity: 0.7; }
+  80%, 100% { transform: scale(2.1); opacity: 0; }
+}
+
+@keyframes pf-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* Speed slider: gradient fill up to the thumb via --pf-fill (0-100%). */
+.pf-range {
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--color-primary), var(--color-cyan)) 0 / var(--pf-fill, 50%) 100% no-repeat,
+    color-mix(in srgb, var(--color-ink) 10%, transparent);
+  cursor: pointer;
+}
+.pf-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #fff;
+  border: 3px solid var(--color-primary);
+  box-shadow: 0 0 0 4px rgb(99 102 241 / 0.18), 0 0 14px rgb(99 102 241 / 0.6);
+  transition: transform 0.2s var(--ease-out-expo);
+}
+.pf-range:hover::-webkit-slider-thumb,
+.pf-range:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+.pf-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #fff;
+  border: 3px solid var(--color-primary);
+  box-shadow: 0 0 14px rgb(99 102 241 / 0.6);
+}

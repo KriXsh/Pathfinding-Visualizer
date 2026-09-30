@@ -1,70 +1,47 @@
-# Getting Started with Create React App
-     
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-   
-## Available Scripts       
-                
-In the project directory, you can run:           
-        
-### `npm start`             
-                 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+# Pathfinding Visualizer
 
-The page will reload when you make changes.\          
-You may also see any lint errors in the console.      
-     
-### `npm test`    
+Watch **Dijkstra**, **A\***, **BFS** and **DFS** explore a grid node by node. Draw walls, scatter weighted terrain, generate a maze, then drag the start or target after a run to re-route live.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Built with Next.js (App Router), Framer Motion and Tailwind CSS v4.
 
-### `npm run build`
+## Getting started
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build
+npm run lint
+npm run format   # prettier, using .prettierrc
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Controls
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+| Action | How |
+| --- | --- |
+| Draw walls / weights | Click or drag on the grid (pick the tool in the toolbar) |
+| Erase | Start a stroke on a cell that already has the current tool |
+| Move start / target | Drag the markers; after a run the path re-solves instantly |
+| Visualize / pause | `Space` |
+| Clear path / board | `R` / `C` |
+| Switch wall ↔ weight | `W` |
 
-### `npm run eject`
+Weights cost 10 to enter instead of 1. Dijkstra and A\* route around them; BFS and DFS ignore them while searching, but the cost shown is what their path really costs.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## How it works
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```
+src/components/pathfinding/
+├── engine/
+│   ├── algorithms.ts   Dijkstra / A* (binary heap), BFS, DFS
+│   ├── mazes.ts        recursive division, random walls, weight clusters
+│   ├── grid-store.ts   typed-array grid state, one subscription per cell
+│   └── controller.ts   replay loop, speed, editing, live re-routing
+├── Grid.tsx            cells (motion.div) and the start / target markers
+├── ControlBar.tsx      glass toolbar
+├── Panels.tsx          live metrics, legend, algorithm notes
+└── PathfindingVisualizer.tsx
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Each search runs to completion up front (well under a millisecond) and records the order it touched nodes in. The animation is a replay of that recording, paced by `requestAnimationFrame` against the current slider value, so changing speed mid-run never restarts it.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Cell state lives in typed arrays outside React. Each cell subscribes to its own slot with `useSyncExternalStore`, so a frame re-renders only the few cells that changed rather than the whole ~1,700-cell board. Theme tokens and the `animate-pf-*` classes are in `src/app/globals.css` (Tailwind v4 has no `tailwind.config.js`).
